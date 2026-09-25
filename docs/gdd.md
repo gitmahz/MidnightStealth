@@ -61,7 +61,7 @@ Complete the nightly objective without waking the household.
 
 ## Player Experience
 
-- The human takes the role of a mischevous, gluttinous cat. Of the eight pleasures, the aim is for sensation and challenge. 
+- The human takes the role of a mischevous, greedy cat. Of the eight pleasures, the aim is for sensation and challenge. 
 
 ## Target Player
 
@@ -99,6 +99,23 @@ PC/Windows
 
 ## Progression
 
+The progression will be over multiple nights (levels). Each level introduces a new stealth challenge while also requiring the player to apply mechanics learned in the previous levels.
+
+Night 1 - Basics/Learning how to sneak  
+    - get to the treats
+
+Night 2 - Someone is sleeping   
+    - Player has to avoid making loud noises to alert the sleeping human  
+
+Night 3 - More noisy objects are places  
+    - e.g. Different floor surface  
+
+Night 4 - Introduce more routes + hiding spots  
+    - Player needs to make decisions between different routes  
+
+Night 5 - Combining all the mechanics together 
+
+
 ## Themes
 
 - Mischief 
@@ -106,4 +123,41 @@ PC/Windows
 
 ## Scope 
 
+### Must Have
 
+- Playable cat
+- Basic movement
+- Crouching / walking / sprinting
+- Noise system
+- Human awareness system
+- Basic human AI
+- Hiding mechanic
+- Environmental collision
+- Objectives
+- Win/lose conditions
+- 4–5 levels
+- Title screen
+- In-game controls/tutorial
+- Basic sound effects
+- Basic UI
+
+### Should Have
+
+- Different hiding spots
+- Different floor surfaces
+- More environmental noise sources
+- Multiple human behaviors
+- Optional objectives
+- More detailed environmental interactions
+
+### Nice to Have 
+
+- Additional cat animations 
+- Cat customization
+- Additional rooms
+- Particle effects
+- Small story moments
+- Additional sound effects
+- Extra bonus levels
+
+If short on time, nice-to-have features will be taken out first, followed by should have features.

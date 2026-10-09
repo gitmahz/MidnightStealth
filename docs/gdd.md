@@ -160,4 +160,10 @@ Night 5 - Combining all the mechanics together
 - Additional sound effects
 - Extra bonus levels
 
+### Cut Line
+
+### Cut (decided not doing)
+- Cat customization, particle effects, additional sound affects, extra bonus levels 
+
+
 If short on time, nice-to-have features will be taken out first, followed by should have features.

@@ -1,0 +1,4 @@
+{
+  "sneak_speed": 80, "walk_speed": 160, "sprint_speed": 260,
+  "sneak_noise": 5,  "walk_noise": 20,  "sprint_noise": 50
+}

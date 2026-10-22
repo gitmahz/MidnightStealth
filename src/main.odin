@@ -2,11 +2,14 @@ package main
 
 import rl "vendor:raylib"
 
+import "core:encoding/json"
+import "core:os"
+import "core:fmt"
+
 
 SCREEN_W :: 1280
 SCREEN_H :: 720
 
-//won't be used for now, but could be used for sprite animation
 CAT_FRAME_W :: 32
 CAT_FRAME_H :: 32
 CAT_FRAME_COUNT :: 7
@@ -21,6 +24,26 @@ AWARENESS_MAX           :: 100.0
 
 Assets :: struct {
     cat: rl.Texture2D,
+}
+
+Tuning :: struct {
+    sneak_speed, walk_speed, sprint_speed: f32,
+    sneak_noise, walk_noise, sprint_noise: f32,
+}
+
+load_tuning :: proc(path: string) -> (t: Tuning, ok: bool) {
+    data, read_err := os.read_entire_file_from_path(path, context.allocator)
+    if read_err != nil {
+        fmt.eprintln("could not read", path, ":", read_err)
+        return {}, false
+    }
+    defer delete(data)
+
+    if err := json.unmarshal(data, &t); err != nil {
+        fmt.eprintln("tuning parse error:", err)
+        return {}, false
+    }
+    return t, true
 }
 
 //List of all the different kinds of entities in the game
@@ -73,11 +96,12 @@ Game :: struct {
     noise_level: f32,
     level:       int,
     assets:      Assets,
+    tuning:      Tuning,
 }
 
 load_assets :: proc() -> Assets {
     a: Assets
-    a.cat = rl.LoadTexture("../assets/AllCatsDemo/AllCatsDemo/Classical/IdleCat.png")
+    a.cat = rl.LoadTexture("assets/AllCatsDemo/AllCatsDemo/Classical/IdleCat.png")
     rl.SetTextureFilter(a.cat, .POINT)  //stops blurring when scaling up
     return a
 }
@@ -99,27 +123,20 @@ entity_rect :: proc(e: Entity) -> rl.Rectangle {
     return {e.pos.x, e.pos.y, e.size.x, e.size.y}
 }
 
-//returns the center of an entity, used for calculating distance between entities
-entity_center :: proc(e: Entity) -> rl.Vector2 {
-    return e.pos + e.size * 0.5
-}
-
-//using Move_Mode enum to determine how fast the cat moves in different modes
-speed_for :: proc(mode: Move_Mode) -> f32 {
+speed_for :: proc(t: Tuning, mode: Move_Mode) -> f32 {
     switch mode {
-    case .Sneak:  return 80
-    case .Walk:   return 160
-    case .Sprint: return 260
+    case .Sneak:  return t.sneak_speed
+    case .Walk:   return t.walk_speed
+    case .Sprint: return t.sprint_speed
     }
     return 0
 }
 
-//using Move_Mode enum to determine how much noise the cat makes in different modes
-noise_for :: proc(mode: Move_Mode) -> f32 {
+noise_for :: proc(t: Tuning, mode: Move_Mode) -> f32 {
     switch mode {
-    case .Sneak:  return 5
-    case .Walk:   return 20
-    case .Sprint: return 50
+    case .Sneak:  return t.sneak_noise
+    case .Walk:   return t.walk_noise
+    case .Sprint: return t.sprint_noise
     }
     return 0
 }
@@ -133,7 +150,7 @@ load_level_1 :: proc(g: ^Game) {
     g.level = 1
 
     //builds cat entity and saves its index for later use
-    g.cat_index = add_entity(g, {kind = .Cat, pos = {100, 600}, size = {24, 24}, active = true})
+    g.cat_index = add_entity(g, {kind = .Cat, pos = {100, 600}, size = {48, 48}, active = true})
 
     //adding other entities to the game world
     add_entity(g, {kind = .Human, pos = {600, 200}, size = {40, 40}, active = true,
@@ -182,7 +199,8 @@ update_playing :: proc(g: ^Game, dt: f32) {
     if moving do dir = rl.Vector2Normalize(dir)
 
     //pixels per second, multiplied by delta time to get pixels per frame
-    cat.pos += dir * speed_for(cat.mode) * dt
+    cat.pos += dir * speed_for(g.tuning, cat.mode) * dt
+
 
     cat.hidden = false
     for e in g.entities {
@@ -195,7 +213,7 @@ update_playing :: proc(g: ^Game, dt: f32) {
 
     noise: f32 = 0
     if moving {
-        noise = noise_for(cat.mode)
+        noise = noise_for(g.tuning, cat.mode)
         for e in g.entities {
             if e.active && e.kind == .Floor_Zone && e.surface == .Noisy_Floorboard &&
             rl.CheckCollisionRecs(entity_rect(cat^), entity_rect(e)) {
@@ -206,33 +224,6 @@ update_playing :: proc(g: ^Game, dt: f32) {
 
     if cat.hidden do noise = 0
     g.noise_level = noise
-
-    //Awareness 
-    //converts the noise level into a hearing radius for humans and dogs, and updates their awareness based on the cat's noise level and distance from them
-    hear_radius := noise * HEARING_RANGE_PER_NOISE
-    for &e in g.entities {
-        //skips over anything thay shouldn't react 
-        if !e.active || (e.kind != .Human && e.kind != .Dog) do continue
-
-        //the straight line distance between the cat and the entity, used to determine how much awareness to add
-        dist := rl.Vector2Distance(entity_center(cat^), entity_center(e))
-        if noise > 0 && dist < hear_radius {
-            //the closer the cat is to the entity, the more awareness it gains, with a maximum of AWARENESS_GAIN per second at zero distance
-            closeness := 1 - dist / hear_radius
-            e.awareness += AWARENESS_GAIN * closeness * dt
-        } else {
-            //if the cat is not making noise or is too far away, the entity's awareness decays over time
-            e.awareness -= AWARENESS_DECAY * dt
-        }
-        //forces the awareness value to stay within the range of 0 to AWARENESS_MAX (100)
-        e.awareness = clamp(e.awareness, 0, AWARENESS_MAX)
-
-        //if the entity's awareness reaches the maximum value, the player loses the game
-        if e.awareness >= AWARENESS_MAX {
-            g.state = .Lose
-            return
-        }
-    }
 
     //Win 
     cat_rect := entity_rect(cat^)
@@ -284,7 +275,6 @@ render_playing :: proc(g: ^Game) {
         case:              color = rl.RED
         }
 
-        rl.DrawRectangleV(e.pos, e.size, color)
 
         //draws the cat texture if the entity is a cat and the cat texture has been loaded
         if e.kind == .Cat && g.assets.cat.id != 0 {
@@ -294,6 +284,9 @@ render_playing :: proc(g: ^Game) {
             rl.DrawTexturePro(tex, src, entity_rect(e), {0, 0}, 0, rl.WHITE)
             continue
         }
+
+        rl.DrawRectangleV(e.pos, e.size, color)
+
     }
 
     //finds the highest awareness value among all humans and dogs, and draws a red bar to represent it
@@ -341,6 +334,9 @@ main :: proc() {
 
     game: Game
     game.state = .Title
+    t, ok := load_tuning("data/tuning.json")
+    if !ok { return }
+    game.tuning = t
     game.assets = load_assets()
     defer unload_assets(game.assets)
     defer delete(game.entities)

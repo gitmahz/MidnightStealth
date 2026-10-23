@@ -1,4 +1,8 @@
 {
   "sneak_speed": 80, "walk_speed": 160, "sprint_speed": 260,
-  "sneak_noise": 5,  "walk_noise": 20,  "sprint_noise": 50
+  "sneak_noise": 5,  "walk_noise": 20,  "sprint_noise": 50,
+  "hearing_range_per_noise": 10,
+  "awareness_gain": 40,
+  "awareness_decay": 10,
+  "awareness_max": 100
 }

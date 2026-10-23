@@ -21,5 +21,8 @@ All other visuals (walls, floor zones, humans, dog, doors, hiding spots, treat) 
   - Structuring the entity collection (`Entity` struct, `add_entity`, level loading)
   - The game state machine and the update/render split
   - Loading and drawing the cat sprite (`load_assets`, `DrawTexturePro`)
-  - The noise and awareness system (hearing range, awareness gain/decay, hiding)
+  - `load_tuning` (JSON loading)
+
 - **Written by me**: the GDD (`docs/gdd.md`), the game concept, the level layout, and tuning values.
+  - Splitting the single source file into `types.odin`, `assets.odin`, `level.odin`, `update.odin`, `render.odin` and `main.odin`
+  - The tuning data file: the `Tuning` struct, moving the speed, noise and awareness constants into `data/tuning.json
